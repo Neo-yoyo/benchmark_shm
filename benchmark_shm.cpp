@@ -25,29 +25,31 @@ using namespace boost::interprocess;
 
 static void shm_boost_thread (benchmark::State& state) {
 
+//    /// таймер выполнения кода
+//    for (auto _ : state) {
+
+    boost::interprocess::shared_memory_object object_write1 (open_or_create, "boost", read_write);
+    object_write1.truncate(sizeof(shared_data));
+    mapped_region region_write{object_write1, read_write};
+    shared_data *data_write = static_cast<shared_data*>(region_write.get_address());
+
+    shared_memory_object object_read1 (open_or_create, "boost", read_write);
+    object_read1.truncate(sizeof(shared_data));
+    mapped_region region_read{object_read1, read_write};
+    shared_data *data_read = static_cast<shared_data*>(region_read.get_address());
+
+    shared_memory_object object_write2 (open_or_create, "boost", read_write);
+    object_write2.truncate(sizeof(shared_data));
+    mapped_region region_write2{object_write2, read_write};
+    shared_data *data_write2 = static_cast<shared_data*>(region_write2.get_address());
+
+    shared_memory_object object_read2 (open_or_create, "boost", read_write);
+    object_read2.truncate(sizeof(shared_data));
+    mapped_region region_read2{object_read2, read_write};
+    shared_data *data_read2 = static_cast<shared_data*>(region_read2.get_address());
+
     /// таймер выполнения кода
     for (auto _ : state) {
-
-        boost::interprocess::shared_memory_object object_write1 (open_or_create, "boost", read_write);
-        object_write1.truncate(sizeof(shared_data));
-        mapped_region region_write{object_write1, read_write};
-        shared_data *data_write = static_cast<shared_data*>(region_write.get_address());
-
-        shared_memory_object object_read1 (open_or_create, "boost", read_write);
-        object_read1.truncate(sizeof(shared_data));
-        mapped_region region_read{object_read1, read_write};
-        shared_data *data_read = static_cast<shared_data*>(region_read.get_address());
-
-        shared_memory_object object_write2 (open_or_create, "boost", read_write);
-        object_write2.truncate(sizeof(shared_data));
-        mapped_region region_write2{object_write2, read_write};
-        shared_data *data_write2 = static_cast<shared_data*>(region_write2.get_address());
-
-        shared_memory_object object_read2 (open_or_create, "boost", read_write);
-        object_read2.truncate(sizeof(shared_data));
-        mapped_region region_read2{object_read2, read_write};
-        shared_data *data_read2 = static_cast<shared_data*>(region_read2.get_address());
-
 
         std::thread t1([&](){
             /// Пройдем нужное количество раз данные.
@@ -72,27 +74,27 @@ static void shm_boost_thread (benchmark::State& state) {
         t1.join();
         t2.join();
 
-        shared_memory_object::remove("boost_write_read");
-        shared_memory_object::remove("boost_read_write");
+        shared_memory_object::remove("boost");
     }
 }
 
 
 static void shm_sistemv_thread (benchmark::State& state) {
 
+//    /// таймер выполнения кода
+//    for (auto _ : state) {
+    /// объект пишущий для читающего объекта во втором потоке
+    xt::shm::system_v::object<shared_data, 4> object_write1("object.shm", true);
+    /// объект читающий от пишущего объекта во втором потоке
+    xt::shm::system_v::object<shared_data, 4> object_read1("object.shm", false);
+
+    /// объект читающий от пишущего сервера
+    xt::shm::system_v::object<shared_data, 4> object_read2("object.shm", false);
+    /// объект пишущий для читающего сервера
+    xt::shm::system_v::object<shared_data, 4> object_write2("object.shm", false);
+
     /// таймер выполнения кода
     for (auto _ : state) {
-        /// объект пишущий для читающего объекта во втором потоке
-        xt::shm::system_v::object<shared_data, 4> object_write1("object.shm", true);
-        /// объект читающий от пишущего объекта во втором потоке
-        xt::shm::system_v::object<shared_data, 4> object_read1("object.shm", false);
-
-        /// объект читающий от пишущего сервера
-        xt::shm::system_v::object<shared_data, 4> object_read2("object.shm", false);
-        /// объект пишущий для читающего сервера
-        xt::shm::system_v::object<shared_data, 4> object_write2("object.shm", false);
-
-    //for (auto _ : state) {
         /// поток один
         std::thread t1([&](){
             /// Пройдем нужное количество раз данные.
@@ -122,18 +124,20 @@ static void shm_sistemv_thread (benchmark::State& state) {
 
 static void shm_posix_thread (benchmark::State& state) {
 
-    /// таймер выполнения кода
+//    /// таймер выполнения кода
+//    for (auto _ : state) {
+    /// объект пишущий для читающего объекта во втором потоке
+    xt::shm::posix::object<shared_data> object_write1("posix", true);
+    /// объект читающий от пишущего объекта во втором потоке
+    xt::shm::posix::object<shared_data> object_read1("posix", false);
+
+    /// объект читающий от пишущего сервера
+    xt::shm::posix::object<shared_data> object_read2("posix", false);
+    /// объект пишущий для читающего сервера
+    xt::shm::posix::object<shared_data> object_write2("posix", false);
+
+        /// таймер выполнения кода
     for (auto _ : state) {
-        /// объект пишущий для читающего объекта во втором потоке
-        xt::shm::posix::object<shared_data> object_write1("posix", true);
-        /// объект читающий от пишущего объекта во втором потоке
-        xt::shm::posix::object<shared_data> object_read1("posix", false);
-
-        /// объект читающий от пишущего сервера
-        xt::shm::posix::object<shared_data> object_read2("posix", false);
-        /// объект пишущий для читающего сервера
-        xt::shm::posix::object<shared_data> object_write2("posix", false);
-
         /// поток один
         std::thread t1([&](){
             /// Пройдем нужное количество раз данные.
